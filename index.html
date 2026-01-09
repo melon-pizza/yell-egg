@@ -14,19 +14,13 @@ button { background:#ff6b6b; color:#fff; border:none; padding:10px 20px; border-
 .egg img { width:120px }
 
 /* 進化演出 */
-.evolve {
-  animation: evolvePop 1s ease-out;
-}
+.evolve { animation: evolvePop 1s ease-out }
 @keyframes evolvePop {
-  0% { transform: scale(0.2); opacity: 0; filter: brightness(0.5); }
-  40% { transform: scale(1.4); opacity: 1; filter: brightness(2); }
-  70% { transform: scale(0.9); filter: brightness(1.3); }
-  100% { transform: scale(1); filter: brightness(1); }
+  0% { transform: scale(0.2); opacity:0 }
+  40% { transform: scale(1.4); opacity:1 }
+  100% { transform: scale(1) }
 }
-.evolve-glow {
-  box-shadow: 0 0 40px 20px rgba(255,255,255,0.8);
-  border-radius: 50%;
-}
+.evolve-glow { box-shadow:0 0 30px rgba(255,255,255,.8) }
 
 .menu { display:flex; gap:10px; justify-content:center; margin-bottom:15px }
 .menu button { background:#6bcfff }
@@ -34,7 +28,6 @@ button { background:#ff6b6b; color:#fff; border:none; padding:10px 20px; border-
 </head>
 
 <body>
-
 <div class="container">
 <h1>Yell Egg 🥚</h1>
 
@@ -69,7 +62,6 @@ button { background:#ff6b6b; color:#fff; border:none; padding:10px 20px; border-
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-/* ===== Supabase ===== */
 const supabase = createClient(
   "https://omabtauqfkswkpyyyttf.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tYWJ0YXVxZmtzd2tweXl5dHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMDQ1MjIsImV4cCI6MjA4MjU4MDUyMn0.sm-zKUJjMz3aJjiKqAUDRwnuJyjwP0FFDO-SvFCBgjQ"
@@ -77,44 +69,44 @@ const supabase = createClient(
 
 /* ===== DOM ===== */
 const app  = document.getElementById("app");
-const post = document.getElementById("post");
+const postBtn = document.getElementById("post");
 const file = document.getElementById("file");
 const feed = document.getElementById("feed");
 
-/* ===== 画像URL ===== */
-const BASE =
-  "https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media";
+/* ===== 画像 ===== */
+const BASE = "https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media/images";
 
 const eggImages = {
-  red:     `${BASE}/images/egg_red.png`,
-  blue:    `${BASE}/images/egg_blue.png`,
-  green:   `${BASE}/images/egg_green.png`,
-  yellow:  `${BASE}/images/egg_yellow.png`,
-  black:   `${BASE}/images/egg_black.png`,
-  unknown: `${BASE}/images/egg_unknown.png`
+  red:`${BASE}/egg_red.png`,
+  blue:`${BASE}/egg_blue.png`,
+  green:`${BASE}/egg_green.png`,
+  yellow:`${BASE}/egg_yellow.png`,
+  black:`${BASE}/egg_black.png`,
+  unknown:`${BASE}/egg_unknown.png`
 };
 
 const birdImages = {
-  red:   `${BASE}/images/bird_red.png`,
-  blue:  `${BASE}/images/bird_blue.png`,
-  green: `${BASE}/images/bird_green.png`,
-  yellow:`${BASE}/images/bird_yellow.png`,
-  black: `${BASE}/images/bird_black.png`,
-  fes1:  `${BASE}/images/bird_original1.png`,
-  fes2:  `${BASE}/images/bird_original2.png`,
-  fes3:  `${BASE}/images/bird_original3.png`
+  red:`${BASE}/bird_red.png`,
+  blue:`${BASE}/bird_blue.png`,
+  green:`${BASE}/bird_green.png`,
+  yellow:`${BASE}/bird_yellow.png`,
+  black:`${BASE}/bird_black.png`,
+  fes1:`${BASE}/bird_original1.png`,
+  fes2:`${BASE}/bird_original2.png`,
+  fes3:`${BASE}/bird_original3.png`
 };
 
-/* ===== 匿名ログイン ===== */
-async function ensureAnonUser() {
+/* ===== ログイン ===== */
+async function init() {
   const { data:{ session } } = await supabase.auth.getSession();
   if (!session) await supabase.auth.signInAnonymously();
   app.style.display = "block";
   loadPosts();
 }
+init();
 
 /* ===== 投稿 ===== */
-post.onclick = async () => {
+postBtn.onclick = async () => {
   const f = file.files[0];
   if (!f) return alert("ファイルを選んでください");
 
@@ -122,53 +114,52 @@ post.onclick = async () => {
   const path = `${user.id}/${Date.now()}_${f.name}`;
 
   await supabase.storage.from("media").upload(path, f);
-  const { data:{ publicUrl } } =
-    supabase.storage.from("media").getPublicUrl(path);
+  const { data:{ publicUrl } } = supabase.storage.from("media").getPublicUrl(path);
 
   const eggs = ["red","blue","green","yellow","black","unknown"];
   const egg = eggs[Math.floor(Math.random()*eggs.length)];
 
   await supabase.from("posts").insert({
-    user_id: user.id,
-    media_url: publicUrl,
-    media_type: f.type.startsWith("video") ? "video" : "image",
-    egg_type: egg,
-    bird_type: null
+    user_id:user.id,
+    media_url:publicUrl,
+    media_type:f.type.startsWith("video") ? "video" : "image",
+    egg_type:egg,
+    bird_type:null
   });
 
-  file.value = "";
+  file.value="";
   loadPosts();
 };
 
 /* ===== 表示 ===== */
 async function loadPosts() {
-  const { data: posts } =
-    await supabase
-      .from("posts")
-      .select("*")
-      .order("created_at", { ascending:false });
+  const { data:posts, error } = await supabase
+    .from("posts")
+    .select("*")
+    .order("created_at",{ascending:false});
 
-  feed.innerHTML = "";
+  if (!posts) return;
+
+  feed.innerHTML="";
 
   for (const p of posts) {
-    const { data: yells } =
-      await supabase
-        .from("yells")
-        .select("*")
-        .eq("post_id", p.id);
+    const { data:yells } = await supabase
+      .from("yells")
+      .select("id")
+      .eq("post_id",p.id);
 
-    const hasBird = p.bird_type !== null;
-    const img = hasBird
+    const hasBird = p.bird_type && birdImages[p.bird_type];
+    const imgUrl = hasBird
       ? birdImages[p.bird_type]
-      : eggImages[p.egg_type];
+      : eggImages[p.egg_type] || eggImages.unknown;
 
     feed.innerHTML += `
       <div class="card">
-        ${p.media_type === "video"
+        ${p.media_type==="video"
           ? `<video src="${p.media_url}" controls muted loop></video>`
           : `<img src="${p.media_url}">`}
         <div class="egg">
-          <img src="${img}" class="${hasBird ? 'evolve evolve-glow' : ''}">
+          <img src="${imgUrl}" class="${hasBird?'evolve evolve-glow':''}">
         </div>
         <p>${yells.length} / 1</p>
         <button onclick="sendYell('${p.id}')">エールを送る！</button>
@@ -178,50 +169,47 @@ async function loadPosts() {
 }
 
 /* ===== エール ===== */
+let sending = false;
 window.sendYell = async (postId) => {
+  if (sending) return;
+  sending = true;
+
   const { data:{ user } } = await supabase.auth.getUser();
 
   await supabase.from("yells").insert({
-    user_id: user.id,
-    post_id: postId
+    user_id:user.id,
+    post_id:postId
   });
 
-  const { data: post } = await supabase
+  const { data:post } = await supabase
     .from("posts")
     .select("egg_type,bird_type")
-    .eq("id", postId)
+    .eq("id",postId)
     .single();
 
   if (!post.bird_type) {
-    let bird;
-    if (post.egg_type === "unknown") {
-      const fes = ["fes1","fes2","fes3"];
-      bird = fes[Math.floor(Math.random()*fes.length)];
-    } else {
-      bird = post.egg_type;
-    }
+    let bird = post.egg_type === "unknown"
+      ? ["fes1","fes2","fes3"][Math.floor(Math.random()*3)]
+      : post.egg_type;
 
-    await supabase
-      .from("posts")
-      .update({ bird_type: bird })
-      .eq("id", postId);
+    await supabase.from("posts")
+      .update({ bird_type:bird })
+      .eq("id",postId);
   }
 
+  sending = false;
   loadPosts();
 };
 
 /* ===== UI ===== */
-window.showAbout = () => {
-  about.style.display = about.style.display === "none" ? "block" : "none";
-  how.style.display = "none";
+window.showAbout = ()=> {
+  about.style.display = about.style.display==="none"?"block":"none";
+  how.style.display="none";
 };
-window.showHow = () => {
-  how.style.display = how.style.display === "none" ? "block" : "none";
-  about.style.display = "none";
+window.showHow = ()=> {
+  how.style.display = how.style.display==="none"?"block":"none";
+  about.style.display="none";
 };
-
-ensureAnonUser();
 </script>
-
 </body>
 </html>
