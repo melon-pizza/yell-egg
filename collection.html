@@ -88,8 +88,6 @@ const BASE =
 
 const UNKNOWN_IMG = `${BASE}/egg_unknown.png`;
 
-const VIDEO_BASE = `${BASE}/movies`;
-
 const birdImages = {
   red:    `${BASE}/bird_red.png`,
   blue:   `${BASE}/bird_blue.png`,
@@ -106,8 +104,6 @@ const birdNames = {
   black: "影蘇鳥"
 };
 
-const UNKNOWN_IMG = `${BASE}/egg_unknown.png`;
-
 /* ===== 認証 ===== */
 async function ensureAnonUser() {
   const { data:{ session } } = await supabase.auth.getSession();
@@ -120,7 +116,10 @@ async function loadCollection() {
     .from("posts")
     .select("bird_type");
 
-  if (error) return console.error(error);
+  if (error) {
+    console.error(error);
+    return;
+  }
 
   const owned = new Set(
     data.map(p => p.bird_type).filter(Boolean)
@@ -156,7 +155,7 @@ function openViewer(color) {
   const video  = document.getElementById("viewerVideo");
   const text   = document.getElementById("viewerText");
 
-  video.src = `${VIDEO_BASE}/bird_${color}_movie.mp4`;
+  video.src = `${BASE}/bird_${color}.mp4`;
   video.currentTime = 0;
   video.play();
 
