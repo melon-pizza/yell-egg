@@ -4,89 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Yell Egg</title>
+
 <style>
 body { font-family:sans-serif; background:#f9f9f9; text-align:center; padding:20px }
 .container { max-width:500px; margin:auto }
 .card { background:#fff; border-radius:15px; padding:15px; margin-bottom:20px; box-shadow:0 4px 10px rgba(0,0,0,.1) }
 video,img { width:100%; border-radius:10px }
 button { background:#ff6b6b; color:#fff; border:none; padding:10px 20px; border-radius:20px; font-weight:bold; cursor:pointer }
-.egg img { width:100px }
-/* 鳥に進化した瞬間の演出 */
-.evolve {
-  animation: evolve 0.8s ease-out;
-}
+.egg img { width:120px }
 
-@keyframes evolve {
-  0% {
-    transform: scale(0.5);
-    opacity: 0;
-    filter: brightness(1);
-  }
-  60% {
-    transform: scale(1.2);
-    opacity: 1;
-    filter: brightness(1.5);
-  }
-  100% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-}
-
-.menu {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 15px;
-}
-
-.menu button {
-  background: #6bcfff;
-}
-
-/* 進化演出（本気） */
+/* 進化演出 */
 .evolve {
   animation: evolvePop 1s ease-out;
 }
-
 @keyframes evolvePop {
-  0% {
-    transform: scale(0.2) rotate(-10deg);
-    opacity: 0;
-    filter: brightness(0.5);
-  }
-  40% {
-    transform: scale(1.4) rotate(5deg);
-    opacity: 1;
-    filter: brightness(2);
-  }
-  70% {
-    transform: scale(0.9) rotate(-3deg);
-    filter: brightness(1.3);
-  }
-  100% {
-    transform: scale(1) rotate(0);
-    filter: brightness(1);
-  }
+  0% { transform: scale(0.2); opacity: 0; filter: brightness(0.5); }
+  40% { transform: scale(1.4); opacity: 1; filter: brightness(2); }
+  70% { transform: scale(0.9); filter: brightness(1.3); }
+  100% { transform: scale(1); filter: brightness(1); }
 }
-
-/* 光エフェクト */
 .evolve-glow {
   box-shadow: 0 0 40px 20px rgba(255,255,255,0.8);
   border-radius: 50%;
 }
 
-
+.menu { display:flex; gap:10px; justify-content:center; margin-bottom:15px }
+.menu button { background:#6bcfff }
 </style>
 </head>
+
 <body>
 
-<audio id="bgm" src="bgm.mp3" loop></audio>
-
-
 <div class="container">
-  <h1>Yell Egg 🥚</h1>
-  <div class="menu">
+<h1>Yell Egg 🥚</h1>
+
+<div class="menu">
   <button onclick="showAbout()">🥚 このサイトについて</button>
   <button onclick="showHow()">📣 あそびかた</button>
   <button onclick="location.href='collection.html'">コレクション</button>
@@ -94,44 +46,25 @@ button { background:#ff6b6b; color:#fff; border:none; padding:10px 20px; border-
 
 <div id="about" style="display:none" class="card">
   <h2>🥚 このサイトについて</h2>
-  <p>
-    Yell Egg は、夢に挑戦している人や頑張ってる人の投稿にエールを送って<br>
-    卵を鳥に進化させみんなをハッピーにするサイトです。
-  </p>
+  <p>エールで卵が鳥に進化する応援アプリです。</p>
 </div>
 
 <div id="how" style="display:none" class="card">
   <h2>📣 あそびかた</h2>
   <ol style="text-align:left">
-    <li>頑張ってる画像や動画を投稿する</li>
-    <li>エールを送ってもらう</li>
-    <li>エールがたまると卵が鳥に進化！</li>
-    <li>鳥をコレクションしよう</li>
+    <li>画像や動画を投稿</li>
+    <li>エールを送る</li>
+    <li>卵が鳥に進化！</li>
   </ol>
 </div>
 
-  <div id="app" style="display:none">
-    <input type="file" id="file" accept="image/*,video/*">
-    <br><br>
-    <button id="post">投稿する</button>
-    <button onclick="location.href='collection.html'">
-   コレクションを見る
-</button>
-    <div id="collection" style="display:none"></div>
-    <div id="feed"></div>
-  </div>
+<div id="app" style="display:none">
+  <input type="file" id="file" accept="image/*,video/*">
+  <br><br>
+  <button id="post">投稿する</button>
+  <div id="feed"></div>
 </div>
-
-<script>
-document.addEventListener("click", () => {
-  const bgm = document.getElementById("bgm");
-  if (bgm && bgm.paused) {
-    bgm.volume = 0.3;
-    bgm.play();
-  }
-}, { once: true });
-</script>
-
+</div>
 
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
@@ -141,16 +74,43 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tYWJ0YXVxZmtzd2tweXl5dHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMDQ1MjIsImV4cCI6MjA4MjU4MDUyMn0.sm-zKUJjMz3aJjiKqAUDRwnuJyjwP0FFDO-SvFCBgjQ"
 );
 
+const app  = document.getElementById("app");
+const post = document.getElementById("post");
+const file = document.getElementById("file");
+const feed = document.getElementById("feed");
+
+const BASE =
+"https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media";
+
+const eggImages = {
+  red:`${BASE}/images/egg_red.png`,
+  blue:`${BASE}/images/egg_blue.png`,
+  green:`${BASE}/images/egg_green.png`,
+  yellow:`${BASE}/images/egg_yellow.png`,
+  black:`${BASE}/images/egg_black.png`,
+  unknown:`${BASE}/images/egg_unknown.png`
+};
+
+const birdImages = {
+  red:`${BASE}/images/bird_red.png`,
+  blue:`${BASE}/images/bird_blue.png`,
+  green:`${BASE}/images/bird_green.png`,
+  yellow:`${BASE}/images/bird_yellow.png`,
+  black:`${BASE}/images/bird_black.png`,
+  fes1:`${BASE}/images/bird_original1.png`,
+  fes2:`${BASE}/images/bird_original2.png`,
+  fes3:`${BASE}/images/bird_original3.png`
+};
 
 /* 匿名ログイン */
 async function ensureAnonUser() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data:{ session } } = await supabase.auth.getSession();
   if (!session) await supabase.auth.signInAnonymously();
-  document.getElementById("app").style.display = "block";
+  app.style.display = "block";
   loadPosts();
 }
 
-/* 投稿（卵をランダムで1回だけ決める） */
+/* 投稿 */
 post.onclick = async () => {
   const f = file.files[0];
   if (!f) return alert("ファイルを選んでください");
@@ -162,17 +122,18 @@ post.onclick = async () => {
   const { data:{ publicUrl } } =
     supabase.storage.from("media").getPublicUrl(path);
 
-  const eggs = ["red","blue","green","yellow","black"];
-  const randomEgg = eggs[Math.floor(Math.random() * eggs.length)];
+  const eggs = ["red","blue","green","yellow","black","unknown"];
+  const egg = eggs[Math.floor(Math.random() * eggs.length)];
 
   await supabase.from("posts").insert({
-    user_id: user.id,
-    media_url: publicUrl,
-    media_type: f.type.startsWith("video") ? "video" : "image",
-    egg_type: randomEgg
+    user_id:user.id,
+    media_url:publicUrl,
+    media_type:f.type.startsWith("video")?"video":"image",
+    egg_type:egg,
+    bird_type:null
   });
 
-  file.value = "";
+  file.value="";
   loadPosts();
 };
 
@@ -181,56 +142,23 @@ async function loadPosts() {
   const { data: posts } =
     await supabase.from("posts").select("*").order("created_at",{ascending:false});
 
-  feed.innerHTML = "";
-
-  const BASE =
-  "https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media";
-
-const eggImages = {
-  red:   `${BASE}/images/egg_red.png`,
-  blue:  `${BASE}/images/egg_blue.png`,
-  green: `${BASE}/images/egg_green.png`,
-  yellow:`${BASE}/images/egg_yellow.png`,
-  black: `${BASE}/images/egg_black.png`
-};
-
-const birdImages = {
-  red:    `${BASE}/images/bird_red.png`,
-  blue:   `${BASE}/images/bird_blue.png`,
-  green:  `${BASE}/images/bird_green.png`,
-  yellow: `${BASE}/images/bird_yellow.png`,
-  black:  `${BASE}/images/bird_black.png`,
-
-  // 🎉 フェス鳥
-  fes1: `${BASE}/images/bird_original1.png`,
-  fes2: `${BASE}/images/bird_original2.png`,
-  fes3: `${BASE}/images/bird_original3.png`
-};
-
+  feed.innerHTML="";
 
   for (const p of posts) {
     const { data: yells } =
-      await supabase.from("yells").select("*").eq("post_id", p.id);
+      await supabase.from("yells").select("*").eq("post_id",p.id);
 
-    const count = yells.length;
-    const isEvolved =count >= 1;
-      const image = isEvolved
-        ? birdImages[p.egg_type]
-        : eggImages[p.egg_type];
+    const evolved = yells.length >= 1;
+    const img = evolved ? birdImages[p.bird_type] : eggImages[p.egg_type];
 
     feed.innerHTML += `
       <div class="card">
-        ${p.media_type === "video"
+        ${p.media_type==="video"
           ? `<video src="${p.media_url}" controls muted loop></video>`
           : `<img src="${p.media_url}">`}
         <div class="egg">
-          <img 
-  src="${image}" 
-  class="${isEvolved ? 'evolve evolve-glow' : ''}"
->
-
+          <img src="${img}" class="${evolved?'evolve evolve-glow':''}">
         </div>
-        <p>${count} / 1</p>
         <button onclick="sendYell('${p.id}')">エールを送る！</button>
       </div>
     `;
@@ -240,26 +168,37 @@ const birdImages = {
 /* エール */
 window.sendYell = async (postId) => {
   const { data:{ user } } = await supabase.auth.getUser();
+
   await supabase.from("yells").insert({
-    user_id: user.id,
-    post_id: postId
+    user_id:user.id,
+    post_id:postId
   });
+
+  const { data: post } = await supabase
+    .from("posts")
+    .select("egg_type,bird_type")
+    .eq("id",postId)
+    .single();
+
+  if (!post.bird_type) {
+    let bird;
+    if (post.egg_type==="unknown") {
+      const fes=["fes1","fes2","fes3"];
+      bird = fes[Math.floor(Math.random()*fes.length)];
+    } else {
+      bird = post.egg_type;
+    }
+
+    await supabase.from("posts")
+      .update({ bird_type:bird })
+      .eq("id",postId);
+  }
+
   loadPosts();
 };
 
-window.showAbout = () => {
-  about.style.display =
-    about.style.display === "none" ? "block" : "none";
-  how.style.display = "none";
-};
-
-window.showHow = () => {
-  how.style.display =
-    how.style.display === "none" ? "block" : "none";
-  about.style.display = "none";
-};
-
-
+window.showAbout=()=>{about.style.display="block";how.style.display="none"}
+window.showHow=()=>{how.style.display="block";about.style.display="none"}
 
 ensureAnonUser();
 </script>

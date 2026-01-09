@@ -66,15 +66,13 @@ img {
 
 <div id="collection" class="grid"></div>
 
-<!-- 演出オーバーレイ -->
+<!-- 演出 -->
 <div id="viewer" class="viewer" onclick="closeViewer()">
   <video id="viewerVideo" playsinline muted></video>
   <div id="viewerText"></div>
 </div>
 
 <script type="module">
-console.log("JS is running");
-
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 const supabase = createClient(
@@ -82,17 +80,20 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tYWJ0YXVxZmtzd2tweXl5dHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMDQ1MjIsImV4cCI6MjA4MjU4MDUyMn0.sm-zKUJjMz3aJjiKqAUDRwnuJyjwP0FFDO-SvFCBgjQ"
 );
 
-const allBirds = ["red", "blue", "green", "yellow", "black"];
+/* ===== 設定 ===== */
+const ALL_BIRDS = ["red","blue","green","yellow","black"];
 
-// 🎬 動画がある色だけ
-const movieBirds = ["red", "blue", "green", "yellow"];
+const HAS_MOVIE = ["red","blue","green","yellow"];
+
+const BASE =
+"https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media";
 
 const birdImages = {
-  red: "bird_red.png",
-  blue: "bird_blue.png",
-  green: "bird_green.png",
-  yellow: "bird_yellow.png",
-  black: "bird_black.png"
+  red: `${BASE}/images/bird_red.png`,
+  blue: `${BASE}/images/bird_blue.png`,
+  green: `${BASE}/images/bird_green.png`,
+  yellow: `${BASE}/images/bird_yellow.png`,
+  black: `${BASE}/images/bird_black.png`
 };
 
 const birdNames = {
@@ -103,28 +104,30 @@ const birdNames = {
   black: "影蘇鳥"
 };
 
+const VIDEO_BASE = `${BASE}/movies`;
+
+/* ===== 認証 ===== */
 async function ensureAnonUser() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data:{ session } } = await supabase.auth.getSession();
   if (!session) await supabase.auth.signInAnonymously();
 }
 
+/* ===== コレクション読込 ===== */
 async function loadCollection() {
-  const { data: posts } = await supabase.from("posts").select("*");
-  const owned = new Set();
+  const { data: posts } = await supabase
+    .from("posts")
+    .select("bird_type");
 
-  for (const p of posts) {
-    const { data: yells } =
-      await supabase.from("yells").select("*").eq("post_id", p.id);
-
-    if (yells.length >= 1 && p.egg_type) {
-      owned.add(p.egg_type);
-    }
-  }
+  const owned = new Set(
+    posts
+      .map(p => p.bird_type)
+      .filter(v => v !== null)
+  );
 
   const el = document.getElementById("collection");
   el.innerHTML = "";
 
-  for (const color of allBirds) {
+  for (const color of ALL_BIRDS) {
     if (owned.has(color)) {
       el.innerHTML += `
         <div class="card" onclick="openViewer('${color}')">
@@ -135,7 +138,7 @@ async function loadCollection() {
     } else {
       el.innerHTML += `
         <div class="card">
-          <img src="unknown.png">
+          <img src="${BASE}/images/unknown.png">
           <h3>？？？</h3>
         </div>
       `;
@@ -149,14 +152,10 @@ function openViewer(color) {
   const video = document.getElementById("viewerVideo");
   const text = document.getElementById("viewerText");
 
-  // 初期化
   video.pause();
   video.src = "";
 
-  if (movieBirds.includes(color)) {
-    // 🎬 動画あり
-    const VIDEO_BASE =
-  "https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media/movies";
+  if (HAS_MOVIE.includes(color)) {
     video.src = `${VIDEO_BASE}/bird_${color}_movie.mp4`;
     video.currentTime = 0;
     video.play();
@@ -166,25 +165,9 @@ function openViewer(color) {
       <span style="color:gold">✨ スペシャル演出 ✨</span>
     `;
   } else {
-    // ⚫ 動画なし（black）
-    const HAS_MOVIE = ["red","blue","green","yellow"];
-
-function openViewer(color) {
-  if (!HAS_MOVIE.includes(color)) {
-    alert("この鳥はまだ演出動画がありません");
-    return;
-  }
-
-  const video = document.getElementById("viewerVideo");
-  video.src = `${VIDEO_BASE}/bird_${color}_movie.mp4`;
-  video.currentTime = 0;
-  video.play();
-  viewer.style.display = "flex";
-}
-
     text.innerHTML = `
       <strong>${birdNames[color]}</strong><br>
-      <span style="color:#aaa">まだ特別演出は準備中…</span>
+      <span style="color:#aaa">まだ演出動画はありません</span>
     `;
   }
 
