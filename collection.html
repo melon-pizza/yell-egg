@@ -31,7 +31,7 @@ img {
   width: 100px;
 }
 
-/* ===== 演出ビュー ===== */
+/* ===== 演出 ===== */
 .viewer {
   position: fixed;
   inset: 0;
@@ -53,7 +53,6 @@ img {
 #viewerText {
   color: white;
   margin-top: 20px;
-  font-size: 18px;
 }
 </style>
 </head>
@@ -66,7 +65,6 @@ img {
 
 <div id="collection" class="grid"></div>
 
-<!-- 演出 -->
 <div id="viewer" class="viewer" onclick="closeViewer()">
   <video id="viewerVideo" playsinline muted></video>
   <div id="viewerText"></div>
@@ -75,27 +73,27 @@ img {
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const allBirds = ["red","blue","green","yellow","black"];
-
+/* ===== Supabase ===== */
 const supabase = createClient(
   "https://omabtauqfkswkpyyyttf.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tYWJ0YXVxZmtzd2tweXl5dHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMDQ1MjIsImV4cCI6MjA4MjU4MDUyMn0.sm-zKUJjMz3aJjiKqAUDRwnuJyjwP0FFDO-SvFCBgjQ"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImV4cCI6MjA4MjU4MDUyMn0.sm-zKUJjMz3aJjiKqAUDRwnuJyjwP0FFDO-SvFCBgjQ"
 );
 
-/* ===== 設定 ===== */
+/* ===== 定数 ===== */
 const ALL_BIRDS = ["red","blue","green","yellow","black"];
-
 const HAS_MOVIE = ["red","blue","green","yellow"];
 
 const BASE =
-"https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media";
+  "https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media";
+
+const VIDEO_BASE = `${BASE}/movies`;
 
 const birdImages = {
-  red: `${BASE}/images/bird_red.png`,
-  blue: `${BASE}/images/bird_blue.png`,
-  green: `${BASE}/images/bird_green.png`,
-  yellow: `${BASE}/images/bird_yellow.png`,
-  black: `${BASE}/images/bird_black.png`
+  red:    `${BASE}/bird_red.png`,
+  blue:   `${BASE}/bird_blue.png`,
+  green:  `${BASE}/bird_green.png`,
+  yellow: `${BASE}/bird_yellow.png`,
+  black:  `${BASE}/bird_black.png`
 };
 
 const birdNames = {
@@ -106,7 +104,7 @@ const birdNames = {
   black: "影蘇鳥"
 };
 
-const VIDEO_BASE = `${BASE}/movies`;
+const UNKNOWN_IMG = `${BASE}/egg_unknown.png`;
 
 /* ===== 認証 ===== */
 async function ensureAnonUser() {
@@ -114,82 +112,63 @@ async function ensureAnonUser() {
   if (!session) await supabase.auth.signInAnonymously();
 }
 
-/* ===== コレクション読込 ===== */
+/* ===== コレクション ===== */
 async function loadCollection() {
   const { data, error } = await supabase
     .from("posts")
     .select("bird_type");
 
-  if (error) {
-    console.error("posts取得エラー", error);
-    return;
-  }
-
-  if (!data) {
-    console.warn("posts が null です");
-    return;
-  }
+  if (error) return console.error(error);
 
   const owned = new Set(
-    data
-      .map(p => p.bird_type)
-      .filter(Boolean)
+    data.map(p => p.bird_type).filter(Boolean)
   );
 
   const el = document.getElementById("collection");
   el.innerHTML = "";
 
-  for (const color of allBirds) {
+  for (const color of ALL_BIRDS) {
     if (owned.has(color)) {
       el.innerHTML += `
-        <div class="card">
+        <div class="card" onclick="openViewer('${color}')">
           <img src="${birdImages[color]}">
-          <h3>${birdNames[color]}</h3>
+          <p>${birdNames[color]}</p>
         </div>
       `;
     } else {
       el.innerHTML += `
         <div class="card">
           <img src="${UNKNOWN_IMG}">
-          <h3>？？？</h3>
+          <p>？？？</p>
         </div>
       `;
     }
   }
 }
 
-
-/* ===== 演出 ===== */
+/* ===== 動画演出 ===== */
 function openViewer(color) {
+  if (!HAS_MOVIE.includes(color)) return;
+
   const viewer = document.getElementById("viewer");
-  const video = document.getElementById("viewerVideo");
-  const text = document.getElementById("viewerText");
+  const video  = document.getElementById("viewerVideo");
+  const text   = document.getElementById("viewerText");
 
-  video.pause();
-  video.src = "";
+  video.src = `${VIDEO_BASE}/bird_${color}_movie.mp4`;
+  video.currentTime = 0;
+  video.play();
 
-  if (HAS_MOVIE.includes(color)) {
-    video.src = `${VIDEO_BASE}/bird_${color}_movie.mp4`;
-    video.currentTime = 0;
-    video.play();
-
-    text.innerHTML = `
-      <strong>${birdNames[color]}</strong><br>
-      <span style="color:gold">✨ スペシャル演出 ✨</span>
-    `;
-  } else {
-    text.innerHTML = `
-      <strong>${birdNames[color]}</strong><br>
-      <span style="color:#aaa">まだ演出動画はありません</span>
-    `;
-  }
+  text.innerHTML = `
+    <strong>${birdNames[color]}</strong><br>
+    ✨ スペシャル演出 ✨
+  `;
 
   viewer.style.display = "flex";
 }
 
 function closeViewer() {
   const viewer = document.getElementById("viewer");
-  const video = document.getElementById("viewerVideo");
+  const video  = document.getElementById("viewerVideo");
 
   video.pause();
   video.src = "";
