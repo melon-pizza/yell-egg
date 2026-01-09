@@ -76,7 +76,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 /* ===== Supabase ===== */
 const supabase = createClient(
   "https://omabtauqfkswkpyyyttf.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImV4cCI6MjA4MjU4MDUyMn0.sm-zKUJjMz3aJjiKqAUDRwnuJyjwP0FFDO-SvFCBgjQ"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tYWJ0YXVxZmtzd2tweXl5dHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMDQ1MjIsImV4cCI6MjA4MjU4MDUyMn0.sm-zKUJjMz3aJjiKqAUDRwnuJyjwP0FFDO-SvFCBgjQ"
 );
 
 /* ===== 定数 ===== */
@@ -85,6 +85,8 @@ const HAS_MOVIE = ["red","blue","green","yellow"];
 
 const BASE =
   "https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media";
+
+const UNKNOWN_IMG = `${BASE}/egg_unknown.png`;
 
 const VIDEO_BASE = `${BASE}/movies`;
 
