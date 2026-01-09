@@ -167,6 +167,21 @@ function openViewer(color) {
     `;
   } else {
     // ⚫ 動画なし（black）
+    const HAS_MOVIE = ["red","blue","green","yellow"];
+
+function openViewer(color) {
+  if (!HAS_MOVIE.includes(color)) {
+    alert("この鳥はまだ演出動画がありません");
+    return;
+  }
+
+  const video = document.getElementById("viewerVideo");
+  video.src = `${VIDEO_BASE}/bird_${color}_movie.mp4`;
+  video.currentTime = 0;
+  video.play();
+  viewer.style.display = "flex";
+}
+
     text.innerHTML = `
       <strong>${birdNames[color]}</strong><br>
       <span style="color:#aaa">まだ特別演出は準備中…</span>
