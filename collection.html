@@ -114,23 +114,33 @@ async function ensureAnonUser() {
 
 /* ===== コレクション読込 ===== */
 async function loadCollection() {
-  const { data: posts } = await supabase
+  const { data, error } = await supabase
     .from("posts")
     .select("bird_type");
 
+  if (error) {
+    console.error("posts取得エラー", error);
+    return;
+  }
+
+  if (!data) {
+    console.warn("posts が null です");
+    return;
+  }
+
   const owned = new Set(
-    posts
+    data
       .map(p => p.bird_type)
-      .filter(v => v !== null)
+      .filter(Boolean)
   );
 
   const el = document.getElementById("collection");
   el.innerHTML = "";
 
-  for (const color of ALL_BIRDS) {
+  for (const color of allBirds) {
     if (owned.has(color)) {
       el.innerHTML += `
-        <div class="card" onclick="openViewer('${color}')">
+        <div class="card">
           <img src="${birdImages[color]}">
           <h3>${birdNames[color]}</h3>
         </div>
@@ -138,13 +148,14 @@ async function loadCollection() {
     } else {
       el.innerHTML += `
         <div class="card">
-          <img src="${BASE}/images/unknown.png">
+          <img src="${UNKNOWN_IMG}">
           <h3>？？？</h3>
         </div>
       `;
     }
   }
 }
+
 
 /* ===== 演出 ===== */
 function openViewer(color) {
