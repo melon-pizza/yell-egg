@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Bird Collection</title>
+
 <style>
 body {
   font-family: sans-serif;
@@ -23,23 +24,57 @@ body {
   padding: 10px;
   border-radius: 12px;
   box-shadow: 0 4px 8px rgba(0,0,0,.1);
+  cursor: pointer;
 }
 
 img {
   width: 100px;
 }
+
+/* ===== 演出ビュー ===== */
+.viewer {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, #000 30%, #111);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 999;
+}
+
+.viewer video {
+  width: 260px;
+  max-width: 80%;
+  border-radius: 16px;
+  box-shadow: 0 0 40px gold;
+}
+
+#viewerText {
+  color: white;
+  margin-top: 20px;
+  font-size: 18px;
+}
 </style>
 </head>
+
 <body>
 
 <h1>コレクション</h1>
 <button onclick="location.href='index.html'">← 戻る</button>
-
 <br><br>
 
 <div id="collection" class="grid"></div>
 
+<!-- 演出オーバーレイ -->
+<div id="viewer" class="viewer" onclick="closeViewer()">
+  <video id="viewerVideo" playsinline muted></video>
+  <div id="viewerText"></div>
+</div>
+
 <script type="module">
+console.log("JS is running");
+
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 const supabase = createClient(
@@ -47,10 +82,11 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tYWJ0YXVxZmtzd2tweXl5dHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMDQ1MjIsImV4cCI6MjA4MjU4MDUyMn0.sm-zKUJjMz3aJjiKqAUDRwnuJyjwP0FFDO-SvFCBgjQ"
 );
 
-// 図鑑に載る全鳥
 const allBirds = ["red", "blue", "green", "yellow", "black"];
 
-// 画像
+// 🎬 動画がある色だけ
+const movieBirds = ["red", "blue", "green", "yellow"];
+
 const birdImages = {
   red: "bird_red.png",
   blue: "bird_blue.png",
@@ -59,7 +95,6 @@ const birdImages = {
   black: "bird_black.png"
 };
 
-// 名前
 const birdNames = {
   red: "紅焔鳥",
   blue: "蒼波鳥",
@@ -68,26 +103,13 @@ const birdNames = {
   black: "影蘇鳥"
 };
 
-// ストーリー
-const birdStories = {
-  red: "強い応援で生まれた情熱の鳥",
-  blue: "仲間の声を静かに受け止める鳥",
-  green: "失敗を成長に変える癒しの鳥",
-  yellow: "挑戦を続ける者に舞い降りる鳥",
-  black: "何度倒れても蘇る不死の鳥"
-};
-
 async function ensureAnonUser() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    await supabase.auth.signInAnonymously();
-  }
+  if (!session) await supabase.auth.signInAnonymously();
 }
 
 async function loadCollection() {
-  const { data: posts } =
-    await supabase.from("posts").select("*");
-
+  const { data: posts } = await supabase.from("posts").select("*");
   const owned = new Set();
 
   for (const p of posts) {
@@ -99,28 +121,72 @@ async function loadCollection() {
     }
   }
 
-  collection.innerHTML = "";
+  const el = document.getElementById("collection");
+  el.innerHTML = "";
 
   for (const color of allBirds) {
     if (owned.has(color)) {
-      collection.innerHTML += `
-        <div class="card">
+      el.innerHTML += `
+        <div class="card" onclick="openViewer('${color}')">
           <img src="${birdImages[color]}">
           <h3>${birdNames[color]}</h3>
-          <p>${birdStories[color]}</p>
         </div>
       `;
     } else {
-      collection.innerHTML += `
+      el.innerHTML += `
         <div class="card">
           <img src="unknown.png">
           <h3>？？？</h3>
-          <p>未発見！？</p>
         </div>
       `;
     }
   }
 }
+
+/* ===== 演出 ===== */
+function openViewer(color) {
+  const viewer = document.getElementById("viewer");
+  const video = document.getElementById("viewerVideo");
+  const text = document.getElementById("viewerText");
+
+  // 初期化
+  video.pause();
+  video.src = "";
+
+  if (movieBirds.includes(color)) {
+    // 🎬 動画あり
+    const VIDEO_BASE =
+  "https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media/movies";
+    video.src = `${VIDEO_BASE}/bird_${color}_movie.mp4`;
+    video.currentTime = 0;
+    video.play();
+
+    text.innerHTML = `
+      <strong>${birdNames[color]}</strong><br>
+      <span style="color:gold">✨ スペシャル演出 ✨</span>
+    `;
+  } else {
+    // ⚫ 動画なし（black）
+    text.innerHTML = `
+      <strong>${birdNames[color]}</strong><br>
+      <span style="color:#aaa">まだ特別演出は準備中…</span>
+    `;
+  }
+
+  viewer.style.display = "flex";
+}
+
+function closeViewer() {
+  const viewer = document.getElementById("viewer");
+  const video = document.getElementById("viewerVideo");
+
+  video.pause();
+  video.src = "";
+  viewer.style.display = "none";
+}
+
+window.openViewer = openViewer;
+window.closeViewer = closeViewer;
 
 await ensureAnonUser();
 loadCollection();

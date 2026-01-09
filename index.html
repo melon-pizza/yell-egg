@@ -141,6 +141,7 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tYWJ0YXVxZmtzd2tweXl5dHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMDQ1MjIsImV4cCI6MjA4MjU4MDUyMn0.sm-zKUJjMz3aJjiKqAUDRwnuJyjwP0FFDO-SvFCBgjQ"
 );
 
+
 /* 匿名ログイン */
 async function ensureAnonUser() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -182,21 +183,30 @@ async function loadPosts() {
 
   feed.innerHTML = "";
 
-  const eggImages = {
-  red: "egg_red.png",
-  blue: "egg_blue.png",
-  green: "egg_green.png",
-  yellow: "egg_yellow.png",
-  black: "egg_black.png"
+  const BASE =
+  "https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media";
+
+const eggImages = {
+  red:   `${BASE}/images/egg_red.png`,
+  blue:  `${BASE}/images/egg_blue.png`,
+  green: `${BASE}/images/egg_green.png`,
+  yellow:`${BASE}/images/egg_yellow.png`,
+  black: `${BASE}/images/egg_black.png`
 };
 
-  const birdImages = {
-  red: "bird_red.png",
-  blue: "bird_blue.png",
-  green: "bird_green.png",
-  yellow: "bird_yellow.png",
-  black: "bird_black.png"
+const birdImages = {
+  red:    `${BASE}/images/bird_red.png`,
+  blue:   `${BASE}/images/bird_blue.png`,
+  green:  `${BASE}/images/bird_green.png`,
+  yellow: `${BASE}/images/bird_yellow.png`,
+  black:  `${BASE}/images/bird_black.png`,
+
+  // 🎉 フェス鳥
+  fes1: `${BASE}/images/bird_original1.png`,
+  fes2: `${BASE}/images/bird_original2.png`,
+  fes3: `${BASE}/images/bird_original3.png`
 };
+
 
   for (const p of posts) {
     const { data: yells } =
