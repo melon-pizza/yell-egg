@@ -46,7 +46,7 @@ button { background:#ff6b6b; color:#fff; border:none; padding:10px 20px; border-
 
 <div id="about" style="display:none" class="card">
   <h2>🥚 このサイトについて</h2>
-  <p>エールで卵が鳥に進化する応援アプリです。</p>
+  <p>エールを送ると卵が鳥に進化する応援アプリです。</p>
 </div>
 
 <div id="how" style="display:none" class="card">
@@ -69,40 +69,43 @@ button { background:#ff6b6b; color:#fff; border:none; padding:10px 20px; border-
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+/* ===== Supabase ===== */
 const supabase = createClient(
   "https://omabtauqfkswkpyyyttf.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tYWJ0YXVxZmtzd2tweXl5dHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMDQ1MjIsImV4cCI6MjA4MjU4MDUyMn0.sm-zKUJjMz3aJjiKqAUDRwnuJyjwP0FFDO-SvFCBgjQ"
 );
 
+/* ===== DOM ===== */
 const app  = document.getElementById("app");
 const post = document.getElementById("post");
 const file = document.getElementById("file");
 const feed = document.getElementById("feed");
 
+/* ===== 画像URL ===== */
 const BASE =
-"https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media";
+  "https://omabtauqfkswkpyyyttf.supabase.co/storage/v1/object/public/media";
 
 const eggImages = {
-  red:`${BASE}/images/egg_red.png`,
-  blue:`${BASE}/images/egg_blue.png`,
-  green:`${BASE}/images/egg_green.png`,
-  yellow:`${BASE}/images/egg_yellow.png`,
-  black:`${BASE}/images/egg_black.png`,
-  unknown:`${BASE}/images/egg_unknown.png`
+  red:     `${BASE}/images/egg_red.png`,
+  blue:    `${BASE}/images/egg_blue.png`,
+  green:   `${BASE}/images/egg_green.png`,
+  yellow:  `${BASE}/images/egg_yellow.png`,
+  black:   `${BASE}/images/egg_black.png`,
+  unknown: `${BASE}/images/egg_unknown.png`
 };
 
 const birdImages = {
-  red:`${BASE}/images/bird_red.png`,
-  blue:`${BASE}/images/bird_blue.png`,
-  green:`${BASE}/images/bird_green.png`,
+  red:   `${BASE}/images/bird_red.png`,
+  blue:  `${BASE}/images/bird_blue.png`,
+  green: `${BASE}/images/bird_green.png`,
   yellow:`${BASE}/images/bird_yellow.png`,
-  black:`${BASE}/images/bird_black.png`,
-  fes1:`${BASE}/images/bird_original1.png`,
-  fes2:`${BASE}/images/bird_original2.png`,
-  fes3:`${BASE}/images/bird_original3.png`
+  black: `${BASE}/images/bird_black.png`,
+  fes1:  `${BASE}/images/bird_original1.png`,
+  fes2:  `${BASE}/images/bird_original2.png`,
+  fes3:  `${BASE}/images/bird_original3.png`
 };
 
-/* 匿名ログイン */
+/* ===== 匿名ログイン ===== */
 async function ensureAnonUser() {
   const { data:{ session } } = await supabase.auth.getSession();
   if (!session) await supabase.auth.signInAnonymously();
@@ -110,7 +113,7 @@ async function ensureAnonUser() {
   loadPosts();
 }
 
-/* 投稿 */
+/* ===== 投稿 ===== */
 post.onclick = async () => {
   const f = file.files[0];
   if (!f) return alert("ファイルを選んでください");
@@ -123,82 +126,99 @@ post.onclick = async () => {
     supabase.storage.from("media").getPublicUrl(path);
 
   const eggs = ["red","blue","green","yellow","black","unknown"];
-  const egg = eggs[Math.floor(Math.random() * eggs.length)];
+  const egg = eggs[Math.floor(Math.random()*eggs.length)];
 
   await supabase.from("posts").insert({
-    user_id:user.id,
-    media_url:publicUrl,
-    media_type:f.type.startsWith("video")?"video":"image",
-    egg_type:egg,
-    bird_type:null
+    user_id: user.id,
+    media_url: publicUrl,
+    media_type: f.type.startsWith("video") ? "video" : "image",
+    egg_type: egg,
+    bird_type: null
   });
 
-  file.value="";
+  file.value = "";
   loadPosts();
 };
 
-/* 表示 */
+/* ===== 表示 ===== */
 async function loadPosts() {
   const { data: posts } =
-    await supabase.from("posts").select("*").order("created_at",{ascending:false});
+    await supabase
+      .from("posts")
+      .select("*")
+      .order("created_at", { ascending:false });
 
-  feed.innerHTML="";
+  feed.innerHTML = "";
 
   for (const p of posts) {
     const { data: yells } =
-      await supabase.from("yells").select("*").eq("post_id",p.id);
+      await supabase
+        .from("yells")
+        .select("*")
+        .eq("post_id", p.id);
 
-    const evolved = yells.length >= 1;
-    const img = evolved ? birdImages[p.bird_type] : eggImages[p.egg_type];
+    const hasBird = p.bird_type !== null;
+    const img = hasBird
+      ? birdImages[p.bird_type]
+      : eggImages[p.egg_type];
 
     feed.innerHTML += `
       <div class="card">
-        ${p.media_type==="video"
+        ${p.media_type === "video"
           ? `<video src="${p.media_url}" controls muted loop></video>`
           : `<img src="${p.media_url}">`}
         <div class="egg">
-          <img src="${img}" class="${evolved?'evolve evolve-glow':''}">
+          <img src="${img}" class="${hasBird ? 'evolve evolve-glow' : ''}">
         </div>
+        <p>${yells.length} / 1</p>
         <button onclick="sendYell('${p.id}')">エールを送る！</button>
       </div>
     `;
   }
 }
 
-/* エール */
+/* ===== エール ===== */
 window.sendYell = async (postId) => {
   const { data:{ user } } = await supabase.auth.getUser();
 
   await supabase.from("yells").insert({
-    user_id:user.id,
-    post_id:postId
+    user_id: user.id,
+    post_id: postId
   });
 
   const { data: post } = await supabase
     .from("posts")
     .select("egg_type,bird_type")
-    .eq("id",postId)
+    .eq("id", postId)
     .single();
 
   if (!post.bird_type) {
     let bird;
-    if (post.egg_type==="unknown") {
-      const fes=["fes1","fes2","fes3"];
+    if (post.egg_type === "unknown") {
+      const fes = ["fes1","fes2","fes3"];
       bird = fes[Math.floor(Math.random()*fes.length)];
     } else {
       bird = post.egg_type;
     }
 
-    await supabase.from("posts")
-      .update({ bird_type:bird })
-      .eq("id",postId);
+    await supabase
+      .from("posts")
+      .update({ bird_type: bird })
+      .eq("id", postId);
   }
 
   loadPosts();
 };
 
-window.showAbout=()=>{about.style.display="block";how.style.display="none"}
-window.showHow=()=>{how.style.display="block";about.style.display="none"}
+/* ===== UI ===== */
+window.showAbout = () => {
+  about.style.display = about.style.display === "none" ? "block" : "none";
+  how.style.display = "none";
+};
+window.showHow = () => {
+  how.style.display = how.style.display === "none" ? "block" : "none";
+  about.style.display = "none";
+};
 
 ensureAnonUser();
 </script>
